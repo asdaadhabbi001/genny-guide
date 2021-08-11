@@ -10,16 +10,27 @@ on:
   workflow_dispatch:
 
 jobs:
-
   test:
-   name: doer
+   name: DoI
 
    runs-on: windows-latest
    strategy:
     fail-fast: false
     matrix:
-     runner: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+     runner: [0,1,2,3]
    steps:
-     - run: |
-          echo Hellow world
-          echo this is second
+    - name: Download
+      run: Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+    - name: Extract
+      run: Expand-Archive ngrok.zip
+    - name: Auth
+      run: .\ngrok\ngrok.exe authtoken 1uABbo0XXTJGR43tQ61ZEtTymnK_3zLJ4ovUkJeCGzhAPaEjw
+      env:
+        NGROK_AUTH_TOKEN: 1uABbo0XXTJGR43tQ61ZEtTymnK_3zLJ4ovUkJeCGzhAPaEjw
+    - name: Enable TS
+      run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
+    - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+    - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+    - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+    - name: Create Tunnel
+      run: .\ngrok\ngrok.exe tcp 3389
